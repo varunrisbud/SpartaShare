@@ -19,6 +19,7 @@ import com.facebook.android.DialogError;
 import com.facebook.model.GraphUser;
 import com.facebook.widget.LoginButton;
 
+import org.brickred.socialauth.Contact;
 import org.brickred.socialauth.Profile;
 import org.brickred.socialauth.android.DialogListener;
 import org.brickred.socialauth.android.SocialAuthAdapter;
@@ -26,10 +27,11 @@ import org.brickred.socialauth.android.SocialAuthError;
 import org.brickred.socialauth.android.SocialAuthListener;
 
 import java.util.Arrays;
+import java.util.List;
 
 
 public class MainActivity extends Activity {
-    private SocialAuthAdapter adapter;
+    private SocialAuthAdapter adapter, contactListAdapter;
 
     //Android Component
     private Button fb_button, tw_button, g_button;
@@ -41,7 +43,7 @@ public class MainActivity extends Activity {
        // getSupportActionBar().hide();
         setContentView(R.layout.activity_main);
 
-        //Social Adapter
+        //Code to fetch userProfile
         adapter = new SocialAuthAdapter(new DialogListener() {
             @Override
             public void onComplete(Bundle bundle) {
@@ -71,6 +73,47 @@ public class MainActivity extends Activity {
             @Override
             public void onError(SocialAuthError socialAuthError) {
                 Log.e("Login activity", socialAuthError.getMessage());
+            }
+
+            @Override
+            public void onCancel() {
+
+            }
+
+            @Override
+            public void onBack() {
+
+            }
+        });
+        //Code to fetch contactList
+        contactListAdapter = new SocialAuthAdapter(new DialogListener() {
+            @Override
+            public void onComplete(Bundle bundle) {
+                contactListAdapter.getContactListAsync(new SocialAuthListener<List<Contact>>() {
+                    @Override
+                    public void onExecute(String s, List<Contact> contacts) {
+                        if(contacts != null && contacts.size() > 0){
+                            /*for (Contact c: contacts){
+                                Log.d("Contants","Fist Name" + c.getFirstName());
+                            }*/
+                            Log.d("Contacts", "Total contants:" + contacts.size());
+                            for (int i = 0; i < 2; i++){
+                                Log.d("Contacts", "Frnd_FirstName" + contacts.get(i));
+                                Log.d("Contacts", "Frnd_LastName" + contacts.get(i));
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onError(SocialAuthError socialAuthError) {
+
+                    }
+                });
+            }
+
+            @Override
+            public void onError(SocialAuthError socialAuthError) {
+
             }
 
             @Override
