@@ -12,103 +12,115 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.facebook.*;
+import com.facebook.android.DialogError;
 import com.facebook.model.GraphUser;
 import com.facebook.widget.LoginButton;
+
+import org.brickred.socialauth.Profile;
+import org.brickred.socialauth.android.DialogListener;
+import org.brickred.socialauth.android.SocialAuthAdapter;
+import org.brickred.socialauth.android.SocialAuthError;
+import org.brickred.socialauth.android.SocialAuthListener;
 
 import java.util.Arrays;
 
 
 public class MainActivity extends Activity {
-    LoginButton loginButton;
+    private SocialAuthAdapter adapter;
 
-    private UiLifecycleHelper uiHelper;
-    private Session.StatusCallback callback = new Session.StatusCallback() {
-        @Override
-        public void call(Session session, SessionState state, Exception exception) {
-            onSessionStateChange(session, state, exception);
-        }
-    };
+    //Android Component
+    private Button fb_button, tw_button, g_button;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+       // getSupportActionBar().hide();
         setContentView(R.layout.activity_main);
-        uiHelper = new UiLifecycleHelper(this, callback);
-        uiHelper.onCreate(savedInstanceState);
 
-        loginButton = (LoginButton) findViewById(R.id.fbLoginButton);
-        loginButton.setReadPermissions(Arrays.asList("basic_info", "email"));
-
-    }
-
-
-    private void onSessionStateChange(Session session, SessionState state, Exception exception) {
-        if (session != null && session.isOpened()) {
-            Log.d("DEBUG", "facebook session is open ");
-            // make request to the /me API
-            Request.executeMeRequestAsync(session, new Request.GraphUserCallback() {
-                // callback after Graph API response with user object
-                @Override
-                public void onCompleted(GraphUser user, Response response) {
-                    if (user != null) {
-                        Log.d("DEBUG", "email: " + user.asMap().get("email").toString());
+        //Social Adapter
+        adapter = new SocialAuthAdapter(new DialogListener() {
+            @Override
+            public void onComplete(Bundle bundle) {
+                adapter.getUserProfileAsync(new SocialAuthListener<Profile>() {
+                    @Override
+                    public void onExecute(String s, Profile profile) {
+                        Log.e("Custom UI", "Login Receiving Data");
+                        Profile profileMap = profile;
+                        Log.d("Custom-UI",  "Validate ID         = " + profileMap.getValidatedId());
+                        Log.d("Custom-UI",  "First Name          = " + profileMap.getFirstName());
+                        Log.d("Custom-UI",  "Last Name           = " + profileMap.getLastName());
+                        Log.d("Custom-UI",  "Email               = " + profileMap.getEmail());
+                        Log.d("Custom-UI",  "Gender              = " + profileMap.getGender());
+                        Log.d("Custom-UI",  "Country             = " + profileMap.getCountry());
+                        Log.d("Custom-UI",  "Language            = " + profileMap.getLanguage());
+                        Log.d("Custom-UI",  "Location            = " + profileMap.getLocation());
+                        Log.d("Custom-UI",  "Profile Image URL   = " + profileMap.getProfileImageURL());
                     }
-                }
-            });
-        }
+
+                    @Override
+                    public void onError(SocialAuthError socialAuthError) {
+                        Log.e("Custom UI", "Profile Data Error");
+                    }
+                });
+            }
+
+            @Override
+            public void onError(SocialAuthError socialAuthError) {
+                Log.e("Login activity", socialAuthError.getMessage());
+            }
+
+            @Override
+            public void onCancel() {
+
+            }
+
+            @Override
+            public void onBack() {
+
+            }
+        });
+
+
+        //Wire up the Login Buttons
+        fb_button = (Button) findViewById(R.id.fbLoginButton);
+      //  tw_button = (Button) findViewById(R.id.buttonTwitter);
+       // g_button = (Button) findViewById(R.id.buttonGoogle);
+
+        //Event Listener for Click
+
+        //Facebook
+        fb_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                adapter.authorize(MainActivity.this, SocialAuthAdapter.Provider.FACEBOOK);
+                Toast.makeText(MainActivity.this, "I am Facebook", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+   /*     //Twitter
+        tw_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                adapter.addCallBack(SocialAuthAdapter.Provider.TWITTER,"http://domain.com/auth/twitter");
+                adapter.authorize(LoginActivity.this, SocialAuthAdapter.Provider.TWITTER);
+                Toast.makeText(LoginActivity.this, "I am Twitter", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        //Google
+        g_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                adapter.addCallBack(SocialAuthAdapter.Provider.GOOGLE,"http://domain.com/google");
+                adapter.authorize(LoginActivity.this, SocialAuthAdapter.Provider.GOOGLE);
+                Toast.makeText(LoginActivity.this, "I am Google", Toast.LENGTH_SHORT).show();
+            }
+        });
+ */
     }
 
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-    @Override
-    public void onResume() {
-        super.onResume();
-        uiHelper.onResume();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        uiHelper.onPause();
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        uiHelper.onActivityResult(requestCode, resultCode, data);
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        uiHelper.onDestroy();
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        uiHelper.onSaveInstanceState(outState);
-    }
 }
